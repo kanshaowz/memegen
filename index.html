@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LoremIpsum - 文本生成器</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2d6a4f;
+            --primary-light: #52b788;
+            --primary-dark: #1b4332;
+            --accent: #d8f3dc;
+            --bg-light: #f1f8f4;
+            --text: #2c3e50;
+            --text-light: #5a6c7d;
+            --leaf-1: #95d5b2;
+            --leaf-2: #74c69d;
+            --leaf-3: #52b788;
+            --sunshine: #ffd166;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #f1f8f4 0%, #e8f5e9 50%, #d4edda 100%);
+            min-height: 100vh;
+            color: var(--text);
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* 装饰叶子 */
+        .leaf {
+            position: fixed;
+            opacity: 0.15;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .leaf-1 { top: 10%; left: 5%; font-size: 120px; transform: rotate(-15deg); }
+        .leaf-2 { top: 30%; right: 8%; font-size: 80px; transform: rotate(25deg); }
+        .leaf-3 { bottom: 20%; left: 10%; font-size: 100px; transform: rotate(45deg); }
+        .leaf-4 { bottom: 30%; right: 5%; font-size: 60px; transform: rotate(-30deg); }
+        .leaf-5 { top: 60%; left: 3%; font-size: 70px; transform: rotate(60deg); }
+
+        /* 容器 */
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 头部 */
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .logo-icon {
+            font-size: 48px;
+            animation: sway 3s ease-in-out infinite;
+        }
+
+        @keyframes sway {
+            0%, 100% { transform: rotate(-5deg); }
+            50% { transform: rotate(5deg); }
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: var(--primary-dark);
+            font-weight: 700;
+            letter-spacing: -1px;
+        }
+
+        .subtitle {
+            color: var(--text-light);
+            font-size: 1.1rem;
+            max-width: 500px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* 主卡片 */
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 24px;
+            padding: 35px;
+            box-shadow: 0 10px 40px rgba(45, 106, 79, 0.1);
+            border: 1px solid rgba(82, 183, 136, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        /* 控制区 */
+        .controls {
+            display: grid;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .control-label {
+            font-weight: 600;
+            color: var(--primary-dark);
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-label::before {
+            content: "🌿";
+        }
+
+        /* 语言选择 */
+        .language-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 10px;
+        }
+
+        .lang-btn {
+            padding: 12px 16px;
+            border: 2px solid var(--leaf-1);
+            background: white;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--primary);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .lang-btn:hover {
+            background: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 4px 15px rgba(45, 106, 79, 0.3);
+        }
+
+        .lang-flag {
+            font-size: 1.2rem;
+        }
+
+        /* 段落数滑块 */
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .slider-wrapper {
+            flex: 1;
+            min-width: 200px;
+            position: relative;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: linear-gradient(to right, var(--leaf-1), var(--primary));
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(45, 106, 79, 0.3);
+            transition: transform 0.2s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+        }
+
+        .paragraph-count {
+            background: var(--primary);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        /* 生成按钮 */
+        .generate-btn {
+            width: 100%;
+            padding: 18px 32px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 6px 20px rgba(45, 106, 79, 0.3);
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(45, 106, 79, 0.4);
+        }
+
+        .generate-btn:active {
+            transform: translateY(-1px);
+        }
+
+        /* 输出区 */
+        .output-section {
+            margin-top: 30px;
+        }
+
+        .output-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .output-title {
+            font-weight: 600;
+            color: var(--primary-dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .copy-btn {
+            padding: 10px 20px;
+            background: var(--accent);
+            color: var(--primary-dark);
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .copy-btn:hover {
+            background: var(--leaf-1);
+            transform: scale(1.05);
+        }
+
+        .copy-btn.copied {
+            background: var(--primary);
+            color: white;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 300px;
+            padding: 20px;
+            border: 2px solid var(--leaf-1);
+            border-radius: 16px;
+            font-size: 1rem;
+            line-height: 1.8;
+            color: var(--text);
+            background: var(--bg-light);
+            resize: vertical;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        /* 统计信息 */
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .stat-value {
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        /* 页脚 */
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        footer a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        /* 响应式 */
+        @media (max-width: 600px) {
+            h1 { font-size: 1.8rem; }
+            .card { padding: 25px; }
+            .language-grid { grid-template-columns: repeat(3, 1fr); }
+            .lang-btn { padding: 10px; font-size: 0.85rem; }
+        }
+    </style>
+</head>
+<body>
+    <!-- 装饰叶子 -->
+    <div class="leaf leaf-1">🍃</div>
+    <div class="leaf leaf-2">🌿</div>
+    <div class="leaf leaf-3">🍀</div>
+    <div class="leaf leaf-4">🌱</div>
+    <div class="leaf leaf-5">🍃</div>
+
+    <div class="container">
+        <header>
+            <div class="logo">
+                <span class="logo-icon">🌿</span>
+                <h1>LoremIpsum</h1>
+            </div>
+            <p class="subtitle" data-i18n="subtitle">生成专业的占位符文本，为您的设计和排版工作提供完美内容</p>
+        </header>
+
+        <main class="card">
+            <div class="controls">
+                <!-- 语言选择 -->
+                <div class="control-group">
+                    <label class="control-label" data-i18n="selectLanguage">选择语言</label>
+                    <div class="language-grid">
+                        <button class="lang-btn active" data-lang="en">
+                            <span class="lang-flag">🇺🇸</span>
+                            <span>EN</span>
+                        </button>
+                        <button class="lang-btn" data-lang="zh">
+                            <span class="lang-flag">🇨🇳</span>
+                            <span>ZH</span>
+                        </button>
+                        <button class="lang-btn" data-lang="es">
+                            <span class="lang-flag">🇪🇸</span>
+                            <span>ES</span>
+                        </button>
+                        <button class="lang-btn" data-lang="ja">
+                            <span class="lang-flag">🇯🇵</span>
+                            <span>JA</span>
+                        </button>
+                        <button class="lang-btn" data-lang="ko">
+                            <span class="lang-flag">🇰🇷</span>
+                            <span>KO</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 段落数 -->
+                <div class="control-group">
+                    <label class="control-label" data-i18n="paragraphCount">段落数量</label>
+                    <div class="slider-container">
+                        <div class="slider-wrapper">
+                            <input type="range" id="paragraphSlider" min="1" max="20" value="3">
+                        </div>
+                        <div class="paragraph-count" id="paragraphCount">3</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 生成按钮 -->
+            <button class="generate-btn" id="generateBtn">
+                <span>✨</span>
+                <span data-i18n="generate">生成文本</span>
+            </button>
+
+            <!-- 输出区 -->
+            <div class="output-section">
+                <div class="output-header">
+                    <span class="output-title">
+                        <span>📄</span>
+                        <span data-i18n="result">生成结果</span>
+                    </span>
+                    <button class="copy-btn" id="copyBtn">
+                        <span>📋</span>
+                        <span data-i18n="copy">复制</span>
+                    </button>
+                </div>
+                <textarea id="output" placeholder="点击"生成文本"按钮开始..."></textarea>
+                <div class="stats">
+                    <div class="stat-item">
+                        <span>📝</span>
+                        <span data-i18n="words">字数</span>: <span class="stat-value" id="wordCount">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>📊</span>
+                        <span data-i18n="characters">字符</span>: <span class="stat-value" id="charCount">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>📄</span>
+                        <span data-i18n="paragraphs">段落</span>: <span class="stat-value" id="paraCount">0</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>🌿 LoremIpsum Generator · Made with 💚 · <a href="https://github.com/kanshaowz/loremipsum" target="_blank">GitHub</a></p>
+        </footer>
+    </div>
+
+    <script>
+        // 多语言文本数据
+        const i18n = {
+            en: {
+                subtitle: "Generate professional placeholder text for your design and typography work",
+                selectLanguage: "Select Language",
+                paragraphCount: "Paragraph Count",
+                generate: "Generate Text",
+                result: "Generated Result",
+                copy: "Copy",
+                copied: "Copied!",
+                words: "Words",
+                characters: "Characters",
+                paragraphs: "Paragraphs",
+                placeholder: "Click 'Generate Text' to start..."
+            },
+            zh: {
+                subtitle: "生成专业的占位符文本，为您的设计和排版工作提供完美内容",
+                selectLanguage: "选择语言",
+                paragraphCount: "段落数量",
+                generate: "生成文本",
+                result: "生成结果",
+                copy: "复制",
+                copied: "已复制！",
+                words: "字数",
+                characters: "字符",
+                paragraphs: "段落",
+                placeholder: "点击「生成文本」按钮开始..."
+            },
+            es: {
+                subtitle: "Genere texto de marcador de posición profesional para su trabajo de diseño y tipografía",
+                selectLanguage: "Seleccionar Idioma",
+                paragraphCount: "Cantidad de Párrafos",
+                generate: "Generar Texto",
+                result: "Resultado Generado",
+                copy: "Copiar",
+                copied: "¡Copiado!",
+                words: "Palabras",
+                characters: "Caracteres",
+                paragraphs: "Párrafos",
+                placeholder: "Haga clic en 'Generar Texto' para comenzar..."
+            },
+            ja: {
+                subtitle: "デザインやタイポグラフィの作業に最適なプロフェッショナルなプレースホルダーテキストを生成",
+                selectLanguage: "言語を選択",
+                paragraphCount: "段落数",
+                generate: "テキスト生成",
+                result: "生成結果",
+                copy: "コピー",
+                copied: "コピー完了！",
+                words: "単語数",
+                characters: "文字数",
+                paragraphs: "段落数",
+                placeholder: "「テキスト生成」ボタンをクリックしてください..."
+            },
+            ko: {
+                subtitle: "디자인 및 타이포그래피 작업을 위한 전문 플레이스홀더 텍스트 생성",
+                selectLanguage: "언어 선택",
+                paragraphCount: "문단 수",
+                generate: "텍스트 생성",
+                result: "생성 결과",
+                copy: "복사",
+                copied: "복사됨!",
+                words: "단어 수",
+                characters: "문자 수",
+                paragraphs: "문단",
+                placeholder: "'텍스트 생성' 버튼을 클릭하세요..."
+            }
+        };
+
+        // 各语言的 Lorem Ipsum 文本库
+        const loremTexts = {
+            en: [
+                "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
+                "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
+                "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.",
+                "Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.",
+                "Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem.",
+                "Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur?",
+                "Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur?",
+                "At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident.",
+                "Similique sunt in culpa qui officia deserunt mollitia animi, id est laborum et dolorum fuga. Et harum quidem rerum facilis est et expedita distinctio.",
+                "Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus id quod maxime placeat facere possimus, omnis voluptas assumenda est, omnis dolor repellendus.",
+                "Temporibus autem quibusdam et aut officiis debitis aut rerum necessitatibus saepe eveniet ut et voluptates repudiandae sint et molestiae non recusandae.",
+                "Itaque earum rerum hic tenetur a sapiente delectus, ut aut reiciendis voluptatibus maiores alias consequatur aut perferendis doloribus asperiores repellat.",
+                "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco.",
+                "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia.",
+                "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis."
+            ],
+            zh: [
+                "春風又綠江南岸，明月何時照我還。山重水複疑無路，柳暗花明又一村。這是一段中文亂數假文，用於排版設計時的占位符文字，讓設計師可以專注於視覺效果而不用擔心內容本身。",
+                "天行健，君子以自強不息；地勢坤，君子以厚德載物。在這個資訊爆炸的時代，我們需要更多優質的內容來豐富我們的生活。設計是一門藝術，也是一種語言，它能夠跨越文化和語言的障礙。",
+                "海內存知己，天涯若比鄰。無為在歧路，兒女共沾巾。排版設計中的文字不僅僅是信息的載體，更是視覺表達的重要元素。好的排版能夠提升閱讀體驗，讓內容更加生動有趣。",
+                "採菊東籬下，悠然見南山。山氣日夕佳，飛鳥相與還。此中有真意，欲辨已忘言。設計師在創作時，常常需要一些臨時的文字來填充版面，這就是亂數假文的用途所在。",
+                "大江东去，浪淘尽，千古风流人物。故垒西边，人道是，三国周郎赤壁。乱石穿空，惊涛拍岸，卷起千堆雪。江山如画，一时多少豪杰。遥想公瑾当年，小乔初嫁了，雄姿英发。",
+                "羽扇纶巾，谈笑间，樯橹灰飞烟灭。故国神游，多情应笑我，早生华发。人生如梦，一尊还酹江月。在設計工作中，文字與圖像的平衡是至關重要的，它們共同構成了視覺傳達的基礎。",
+                "床前明月光，疑是地上霜。举头望明月，低头思故乡。這首詩表達了詩人對故鄉的思念之情。在現代設計中，我們也需要這種情感的傳遞，讓作品能夠打動人心，引起共鳴。",
+                "白日依山尽，黄河入海流。欲穷千里目，更上一层楼。設計是一個不斷學習和進步的過程，只有不斷提升自己，才能創造出更好的作品。讓我們一起努力，追求卓越。",
+                "红豆生南国，春来发几枝。愿君多采撷，此物最相思。色彩、字體、佈局是設計的三大要素，它們相互配合，共同營造出獨特的視覺風格。好的設計能夠讓人印象深刻，久久難忘。",
+                "千山鸟飞绝，万径人踪灭。孤舟蓑笠翁，独钓寒江雪。簡約而不簡單，這是現代設計的核心理念。通過精簡的視覺元素，傳達豐富的信息和情感，是每個設計師追求的目標。"
+            ],
+            es: [
+                "El diseño es el alma de la comunicación visual, un lenguaje universal que trasciende fronteras y culturas. Cuando creamos contenido visual, buscamos no solo la estética, sino también la funcionalidad y el propósito.",
+                "La creatividad es la inteligencia divirtiéndose. Cada proyecto de diseño presenta desafíos únicos que requieren soluciones innovadoras y pensamiento lateral. El proceso creativo es tan importante como el resultado final.",
+                "En el mundo del diseño gráfico, la tipografía juega un papel fundamental. Las palabras tienen poder, pero la forma en que se presentan amplifica ese poder de maneras inimaginables. Cada fuente cuenta una historia diferente.",
+                "Los colores evocan emociones, las formas comunican ideas, y el espacio en blanco respira vida a la composición. Un buen diseño es aquel que encuentra el equilibrio perfecto entre todos estos elementos.",
+                "La simplicidad es la máxima sofisticación. En una época de sobrecarga de información, el diseño minimalista permite que el mensaje principal brille sin distracciones innecesarias.",
+                "El diseño centrado en el usuario no es solo una metodología, es una filosofía. Entender las necesidades, deseos y comportamientos de las personas es esencial para crear experiencias significativas.",
+                "Cada píxel cuenta en el diseño digital. La atención al detalle separa el buen trabajo del excelente. La precisión y la consistencia son marcas de un profesional dedicado.",
+                "La innovación en diseño viene de la voluntad de arriesgarse, de experimentar con nuevas ideas y de no temer al fracaso. Cada error es una oportunidad de aprendizaje.",
+                "La historia del diseño está llena de movimientos revolucionarios que cambiaron la forma en que vemos el mundo. Desde el Bauhaus hasta el diseño digital, cada era aporta su propia visión única.",
+                "El futuro del diseño está en la intersección entre tecnología y humanidad. Las herramientas evolucionan, pero el objetivo permanece: comunicar, conectar y crear belleza."
+            ],
+            ja: [
+                "デザインとは、視覚的な言語であり、文化や国境を越えて人々とコミュニケーションを取る手段です。良いデザインは、単なる美しさではなく、機能性と目的を兼ね備えています。",
+                "創造性とは、知性が楽しんでいる状態のことです。デザインプロジェクトはそれぞれ独特な課題を提示し、革新的な解決策と水平思考を必要とします。創造過程は最終結果と同じくらい重要です。",
+                "グラフィックデザインの世界では、タイポグラフィが重要な役割を果たします。言葉には力がありますが、その提示方法によって、その力は想像を超えて増幅されます。各フォントは異なる物語を語ります。",
+                "色彩は感情を呼び起こし、形はアイデアを伝え、余白は構図に命を吹き込みます。良いデザインとは、これらすべての要素間で完璧なバランスを見出すものです。",
+                "シンプルさは最高の洗練です。情報過多の時代において、ミニマリストデザインは、不要な混乱なしに主要なメッセージを輝かせることを可能にします。",
+                "ユーザー中心のデザインは単なる方法論ではなく、哲学です。人々のニーズ、欲望、行動を理解することは、有意義な体験を創造するために不可欠です。",
+                "デジタルデザインでは、すべてのピクセルが重要です。細部への注意が、良い作品と優れた作品を分けます。正確さと一貫性は、熱心なプロフェッショナルの特徴です。",
+                "デザインの革新は、リスクを取る意志、新しいアイデアを実験する勇気、そして失敗を恐れない心から生まれます。すべての間違いは学習の機会です。",
+                "デザインの歴史は、世界の見方を変えた革命的なムーブメントで満ちています。バウハウスからデジタルデザインまで、それぞれの時代が独自のビジョンをもたらしています。",
+                "デザインの未来は、テクノロジーと人間性の交差点にあります。ツールは進化しますが、目標は変わりません：コミュニケーション、つながり、美の創造。"
+            ],
+            ko: [
+                "디자인은 시각적 언어이자 문화와 국경을 넘어 사람들과 소통하는 수단입니다. 좋은 디자인은 단순한 아름다움뿐만 아니라 기능성과 목적성을 겸비해야 합니다.",
+                "창의성은 지성이 즐거워하는 상태입니다. 디자인 프로젝트는 각각 고유한 과제를 제시하며 혁신적인 해결책과 수평적 사고를 필요로 합니다. 창작 과정은 최종 결과만큼 중요합니다.",
+                "그래픽 디자인 세계에서 타이포그래피는 중요한 역할을 합니다. 단어에는 힘이 있지만, 그 표현 방식에 따라 그 힘은 상상을 초월하여 증폭됩니다. 각 글꼴은 다른 이야기를 전합니다.",
+                "색상은 감정을 불러일으키고, 형태는 아이디어를 전달하며, 여백은 구성에 생명을 불어넣습니다. 좋은 디자인은 이러한 모든 요소 사이에서 완벽한 균형을 찾는 것입니다.",
+                "단순함은 최고의 세련됨입니다. 정보 과잉 시대에 미니멀리스트 디자인은 불필요한 혼란 없이 주요 메시지를 빛나게 합니다.",
+                "사용자 중심 디자인은 단순한 방법론이 아닌 철학입니다. 사람들의 필요, 욕구, 행동을 이해하는 것은 의미 있는 경험을 창조하는 데 필수적입니다.",
+                "디지털 디자인에서 모든 픽셀이 중요합니다. 세부 사항에 대한 관심이 좋은 작업과 훌륭한 작업을 구분합니다. 정확성과 일관성은 열정적인 전문가의 특징입니다.",
+                "디자인 혁신은 리스크를 감수하려는 의지, 새로운 아이디어를 실험하는 것, 그리고 실패를 두려워하지 않는 마음에서 나옵니다. 모든 실수는 학습의 기회입니다.",
+                "디자인의 역사는 세상을 보는 방식을 바꾼 혁명적인 운동으로 가득합니다. 바우하우스부터 디지털 디자인까지 각 시대가 고유한 비전을 가져왔습니다.",
+                "디자인의 미래는 기술과 인간성의 교차점에 있습니다. 도구는 진화하지만 목표는 변하지 않습니다: 소통, 연결, 아름다움의 창조."
+            ]
+        };
+
+        // 当前语言
+        let currentLang = 'en';
+
+        // DOM 元素
+        const langBtns = document.querySelectorAll('.lang-btn');
+        const paragraphSlider = document.getElementById('paragraphSlider');
+        const paragraphCountDisplay = document.getElementById('paragraphCount');
+        const generateBtn = document.getElementById('generateBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const output = document.getElementById('output');
+        const wordCountDisplay = document.getElementById('wordCount');
+        const charCountDisplay = document.getElementById('charCount');
+        const paraCountDisplay = document.getElementById('paraCount');
+
+        // 语言切换
+        langBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                langBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentLang = btn.dataset.lang;
+                updateUI();
+            });
+        });
+
+        // 更新界面语言
+        function updateUI() {
+            const texts = i18n[currentLang];
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.dataset.i18n;
+                if (texts[key]) {
+                    el.textContent = texts[key];
+                }
+            });
+            output.placeholder = texts.placeholder;
+        }
+
+        // 滑块更新
+        paragraphSlider.addEventListener('input', () => {
+            paragraphCountDisplay.textContent = paragraphSlider.value;
+        });
+
+        // 生成文本
+        function generateText() {
+            const count = parseInt(paragraphSlider.value);
+            const texts = loremTexts[currentLang];
+            const result = [];
+            
+            for (let i = 0; i < count; i++) {
+                const randomIndex = Math.floor(Math.random() * texts.length);
+                result.push(texts[randomIndex]);
+            }
+            
+            const finalText = result.join('\n\n');
+            output.value = finalText;
+            updateStats(finalText);
+        }
+
+        // 更新统计
+        function updateStats(text) {
+            const charCount = text.length;
+            const wordCount = text.trim().split(/\s+/).filter(w => w.length > 0).length;
+            const paraCount = text.trim().split(/\n\n+/).filter(p => p.length > 0).length;
+            
+            charCountDisplay.textContent = charCount.toLocaleString();
+            wordCountDisplay.textContent = wordCount.toLocaleString();
+            paraCountDisplay.textContent = paraCount;
+        }
+
+        // 复制功能
+        async function copyText() {
+            if (!output.value.trim()) return;
+            
+            try {
+                await navigator.clipboard.writeText(output.value);
+                const originalText = copyBtn.innerHTML;
+                const copiedText = i18n[currentLang].copied;
+                
+                copyBtn.innerHTML = `<span>✅</span><span>${copiedText}</span>`;
+                copyBtn.classList.add('copied');
+                
+                setTimeout(() => {
+                    copyBtn.innerHTML = originalText;
+                    copyBtn.classList.remove('copied');
+                }, 2000);
+            } catch (err) {
+                // 降级方案
+                output.select();
+                document.execCommand('copy');
+                alert(i18n[currentLang].copied);
+            }
+        }
+
+        // 事件监听
+        generateBtn.addEventListener('click', generateText);
+        copyBtn.addEventListener('click', copyText);
+
+        // 初始化
+        generateText();
+    </script>
+</body>
+</html>
